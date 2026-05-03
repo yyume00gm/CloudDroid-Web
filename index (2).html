@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CloudDroid OS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #1a1a1a; --accent: #33b5e5; --success: #66bb6a;
+    }
+    * { font-family: 'Roboto', sans-serif; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+    body { margin: 0; background: #111; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+    body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.15) 0px, rgba(0, 0, 0, 0.15) 1px, transparent 1px, transparent 2px); pointer-events: none; z-index: 9999; }
+
+    .phone-frame {
+      width: 380px; height: 750px; background: #000; border-radius: 30px; border: 4px solid #222;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8); position: relative; overflow: hidden; display: flex; flex-direction: column;
+    }
+
+    .status-bar { height: 24px; background: #1f1f1f; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; font-size: 11px; color: #fff; z-index: 100; }
+    .nav-bar { height: 48px; background: #1a1a1a; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 100; }
+    .nav-btn { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .nav-btn svg { fill: #888; transition: fill 0.2s; }
+    .nav-btn:active svg { fill: var(--accent); }
+
+    .screen-container { flex: 1; position: relative; overflow: hidden; background: #000; }
+    .wallpaper-layer { position: absolute; inset: 0; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); z-index: 0; background-size: cover; }
+
+    .home-screen { position: relative; height: 100%; z-index: 1; padding: 20px 16px; display: flex; flex-direction: column; }
+    .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .app-icon { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.1s; position: relative; }
+    .app-icon:active { transform: scale(0.9); }
+    .app-icon-img { width: 54px; height: 54px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); margin-bottom: 6px; font-size: 24px; color: white; position: relative; overflow: hidden; }
+    
+    /* App Icon Styles */
+    .app-instagram { background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%); }
+    .app-tiktok { background: #000; border: 1px solid #333; }
+    .app-store { background: linear-gradient(135deg, #0f9d58, #0b8043); }
+    .app-emulator { background: linear-gradient(135deg, #8e44ad, #9b59b6); } /* Emulator Style */
+    
+    .app-icon-label { font-size: 10px; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,1); }
+    
+    .badge { position: absolute; top: -5px; right: 5px; background: #f44336; color: white; font-size: 9px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: none; align-items: center; justify-content: center; border: 1px solid #fff; }
+
+    .widget-card { margin-top: auto; background: rgba(30,30,30,0.85); backdrop-filter: blur(10px); border-radius: 16px; padding: 16px; border: 1px solid rgba(255,255,255,0.1); }
+    .widget-title { font-size: 12px; color: var(--accent); font-weight: 500; }
+
+    .app-screen { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #1a1a1a; transform: translateX(100%); transition: transform 0.3s; z-index: 10; display: flex; flex-direction: column; }
+    .app-screen.active { transform: translateX(0); }
+    .app-header { height: 54px; background: #252525; display: flex; align-items: center; padding: 0 8px; border-bottom: 1px solid #333; }
+    .back-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .back-btn svg { fill: #fff; }
+    .header-title { font-size: 18px; color: #fff; margin-left: 4px; }
+    .app-content { flex: 1; overflow-y: auto; padding: 12px; position: relative; }
+
+    /* Camera & Gallery & Store styles same as before */
+    #cameraScreen { background: #000; }
+    #cameraScreen .app-content { padding: 0; display: flex; flex-direction: column; height: 100%; }
+    .camera-wrapper { flex: 1; position: relative; overflow: hidden; background: #111; }
+    #videoFeed { width: 100%; height: 100%; object-fit: cover; filter: sepia(0.2) contrast(1.1) brightness(0.9); }
+    .vintage-overlay { position: absolute; inset: 0; background: radial-gradient(circle, transparent 60%, rgba(0,0,0,0.6) 100%); mix-blend-mode: multiply; pointer-events: none; z-index: 2; }
+    .shutter-container { height: 100px; background: #000; display: flex; align-items: center; justify-content: center; z-index: 10; }
+    .shutter-btn { width: 70px; height: 70px; border-radius: 50%; background: #fff; border: 4px solid rgba(255,255,255,0.5); cursor: pointer; }
+    .shutter-btn:active { transform: scale(0.9); }
+    .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .gallery-item { aspect-ratio: 1; background-size: cover; background-position: center; }
+    .game-card { display: flex; align-items: center; background: #252525; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+    .game-icon { width: 50px; height: 50px; border-radius: 10px; margin-right: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    .game-info { flex: 1; }
+    .game-title { font-size: 14px; color: #fff; }
+    .game-meta { font-size: 10px; color: #888; }
+    .play-btn { background: var(--accent); color: #fff; border: none; padding: 6px 14px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; }
+
+    /* Emulator Specific Styles */
+    .emulator-btn { width: 100%; padding: 14px; margin-bottom: 10px; background: #333; border: 1px solid #444; border-radius: 8px; color: white; text-align: left; cursor: pointer; }
+    .emulator-btn:active { background: #444; }
+    .emulator-btn h3 { margin: 0 0 4px 0; font-size: 15px; }
+    .emulator-btn p { margin: 0; font-size: 11px; color: #aaa; }
+    
+    /* Fullscreen Container for Emulator/Games */
+    #fullScreenContainer { position: absolute; inset: 0; background: #000; z-index: 500; display: none; flex-direction: column; }
+    #fullScreenContainer.active { display: flex; }
+    .fs-toolbar { height: 40px; background: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; border-bottom: 1px solid #333; z-index: 50; }
+    .fs-frame { flex: 1; border: none; width: 100%; height: 100%; background: #000; }
+
+    .toast { position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%) translateY(100px); background: #333; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 12px; transition: all 0.3s; opacity: 0; z-index: 2000; white-space: nowrap; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    #hiddenCanvas { display: none; }
+  </style>
+</head>
+<body>
+
+<canvas id="hiddenCanvas"></canvas>
+
+<div class="phone-frame">
+  <div class="status-bar">
+    <span id="clock">12:00</span>
+    <div style="display:flex;gap:6px;">
+      <svg width="14" height="14" fill="white" viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+      <svg width="14" height="14" fill="white" viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+    </div>
+  </div>
+
+  <div class="screen-container">
+    <div class="wallpaper-layer"></div>
+
+    <!-- HOME SCREEN -->
+    <div class="home-screen">
+      <div class="app-grid">
+        
+        <!-- Instagram -->
+        <div class="app-icon" onclick="openExternalApp('https://instagram.com', 'Instagram')">
+          <div class="app-icon-img app-instagram">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          </div>
+          <span class="app-icon-label">Instagram</span>
+        </div>
+
+        <!-- TikTok -->
+        <div class="app-icon" onclick="openExternalApp('https://tiktok.com', 'TikTok')">
+          <div class="app-icon-img app-tiktok">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+          </div>
+          <span class="app-icon-label">TikTok</span>
+        </div>
+
+        <!-- Play Store -->
+        <div class="app-icon" onclick="openExternalApp('https://play.google.com/store', 'Play Store')">
+          <div class="app-icon-img app-store">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/></svg>
+          </div>
+          <span class="app-icon-label">Play Store</span>
+        </div>
+
+        <!-- NEW: Emulator Station -->
+        <div class="app-icon" data-app="emulator">
+          <div class="app-icon-img app-emulator">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M5,3H19A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3M7,7V9H9V7H7M11,7V9H13V7H11M15,7V9H17V7H15M11,11V13H13V11H11M15,11V13H17V11H15M7,11V13H9V11H7M7,15V17H9V15H7M11,15V17H13V15H11M15,15V17H17V15H15Z"/></svg>
+          </div>
+          <span class="app-icon-label">Emulator</span>
+        </div>
+
+        <!-- Camera -->
+        <div class="app-icon" data-app="camera">
+          <div class="app-icon-img" style="background: linear-gradient(135deg, #555, #222);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 15.2A3.2 3.2 0 1 0 12 8.8a3.2 3.2 0 0 0 0 6.4z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+          </div>
+          <span class="app-icon-label">Camera</span>
+        </div>
+
+        <!-- Gallery -->
+        <div class="app-icon" data-app="gallery">
+          <div class="app-icon-img" style="background: linear-gradient(135deg, #f4b400, #e09800);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/></svg>
+          </div>
+          <div class="badge" id="galleryBadge">0</div>
+          <span class="app-icon-label">Gallery</span>
+        </div>
+
+        <!-- Mini Games -->
+        <div class="app-icon" data-app="store">
+          <div class="app-icon-img" style="background: linear-gradient(135deg, #673AB7, #512DA8);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M21,6H3A2,2 0 0,0 1,8V16A2,2 0 0,0 3,18H21A2,2 0 0,0 23,16V8A2,2 0 0,0 21,6M21,16H3V8H21M6,15H8V13H10V11H8V9H6V11H4V13H6M14.5,12A1.5,1.5 0 0,1 13,10.5A1.5,1.5 0 0,1 14.5,9A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 14.5,12M18.5,15A1.5,1.5 0 0,1 17,13.5A1.5,1.5 0 0,1 18.5,12A1.5,1.5 0 0,1 20,13.5A1.5,1.5 0 0,1 18.5,15Z"/></svg>
+          </div>
+          <span class="app-icon-label">Mini Games</span>
+        </div>
+
+      </div>
+
+      <div class="widget-card">
+        <div class="widget-title">Storage Saved: ~4.5 GB</div>
+        <div style="font-size:10px; color:#aaa; margin-top:4px;">Emulator & Cloud Gaming Active</div>
+      </div>
+    </div>
+
+    <!-- APP: Camera -->
+    <div class="app-screen" id="cameraScreen">
+      <div class="app-header">
+        <div class="back-btn" onclick="closeApp()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></div>
+        <span class="header-title">Retro Camera</span>
+      </div>
+      <div class="app-content" style="padding:0; display:flex; flex-direction:column;">
+          <div class="camera-wrapper" style="flex:1;"><video id="videoFeed" autoplay playsinline muted></video><div class="vintage-overlay"></div></div>
+          <div class="shutter-container"><div class="shutter-btn" onclick="takePhoto()"></div></div>
+      </div>
+    </div>
+
+    <!-- APP: Gallery -->
+    <div class="app-screen" id="galleryScreen">
+      <div class="app-header"><div class="back-btn" onclick="closeApp()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></div><span class="header-title">Gallery</span></div>
+      <div class="app-content"><div class="gallery-grid" id="galleryGrid"><div style="grid-column:span 3; text-align:center; color:#555; padding:40px;">No Photos</div></div></div>
+    </div>
+
+    <!-- APP: Mini Games -->
+    <div class="app-screen" id="storeScreen">
+      <div class="app-header"><div class="back-btn" onclick="closeApp()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></div><span class="header-title">Arcade</span></div>
+      <div class="app-content" id="gameList"></div>
+    </div>
+
+    <!-- APP: Emulator Station -->
+    <div class="app-screen" id="emulatorScreen">
+      <div class="app-header">
+        <div class="back-btn" onclick="closeApp()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></div>
+        <span class="header-title">Emulator Station</span>
+      </div>
+      <div class="app-content">
+        <div style="padding: 10px; background: #333; border-radius: 8px; margin-bottom: 15px; font-size: 12px; color: #ddd;">
+          Select a core to start. This uses RetroArch web player. For custom games, use the file loader inside.
+        </div>
+        
+        <!-- List of Emulator Cores -->
+        <button class="emulator-btn" onclick="launchEmulator('https://web.archive.org/web/20220630172849if_/https://www.retroarch.com/index.php?page=core-list')">
+          <h3>Load Core (System)</h3>
+          <p>Choose emulator system (PS1, GBA, NES, etc)</p>
+        </button>
+
+        <button class="emulator-btn" onclick="launchEmulator('https://webrcade.github.io/')">
+          <h3>WebRCade (Easy Mode)</h3>
+          <p>Play classic games instantly without setup</p>
+        </button>
+      </div>
+    </div>
+
+    <!-- Fullscreen Container for Emulator/Games -->
+    <div id="fullScreenContainer">
+      <div class="fs-toolbar">
+        <span id="fsTitle" style="color:white; font-size:12px;">Loading...</span>
+        <div class="back-btn" onclick="closeFullScreen()"><svg viewBox="0 0 24 24" fill="white"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></div>
+      </div>
+      <iframe id="fsFrame" class="fs-frame" allow="fullscreen; autoplay; gamepad" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+    </div>
+
+  </div>
+
+  <div class="nav-bar">
+    <div class="nav-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></div>
+    <div class="nav-btn" onclick="goHome()"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+    <div class="nav-btn"><svg viewBox="0 0 24 24"><path d="M4 4h16v2H4V4zm0 14h16v2H4v-2zm0-7h16v2H4v-2z"/></svg></div>
+  </div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+    const miniGames = [
+        { name: 'Paper.io 2', desc: 'Arcade', icon: '📄', color: '#ff9800', url: 'https://paper-io.com' },
+        { name: 'Slither.io', desc: 'Snake', icon: '🐍', color: '#2196f3', url: 'https://slither.io' }
+    ];
+
+    let photos = [];
+    let stream = null;
+    
+    const video = document.getElementById('videoFeed');
+    const canvas = document.getElementById('hiddenCanvas');
+    const ctx = canvas.getContext('2d');
+    const galleryGrid = document.getElementById('galleryGrid');
+    const galleryBadge = document.getElementById('galleryBadge');
+    const gameList = document.getElementById('gameList');
+
+    function init() {
+        updateClock();
+        setInterval(updateClock, 1000);
+        renderMiniGames();
+
+        document.querySelectorAll('.app-icon[data-app]').forEach(icon => {
+            icon.addEventListener('click', () => openInternalApp(icon.dataset.app));
+        });
+    }
+
+    function updateClock() {
+        document.getElementById('clock').textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+    // --- Logic ---
+    function openExternalApp(url, name) {
+        showToast(`Opening ${name}...`);
+        setTimeout(() => window.open(url, '_blank'), 300);
+    }
+
+    function openInternalApp(appName) {
+        const screen = document.getElementById(appName + 'Screen');
+        if (screen) {
+            screen.classList.add('active');
+            if (appName === 'camera') startCamera();
+            if (appName === 'gallery') updateGalleryView();
+        }
+    }
+
+    function closeApp() {
+        const activeScreen = document.querySelector('.app-screen.active');
+        if (activeScreen) {
+            activeScreen.classList.remove('active');
+            if (activeScreen.id === 'cameraScreen') stopCamera();
+        }
+    }
+
+    function goHome() { closeApp(); closeFullScreen(); }
+    function goBack() {
+        if (document.getElementById('fullScreenContainer').classList.contains('active')) closeFullScreen();
+        else closeApp();
+    }
+    
+    function showToast(msg) {
+        const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 1500);
+    }
+
+    // --- Emulator Logic ---
+    function launchEmulator(url) {
+  
